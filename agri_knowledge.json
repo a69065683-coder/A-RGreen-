@@ -1,0 +1,91 @@
+{
+  "crops": {
+    "tomato": {
+      "name": "طماطم",
+      "planting": "أغسطس - سبتمبر",
+      "harvest": "نوفمبر - ديسمبر",
+      "spraying": "كل 10 أيام",
+      "irrigation": "ري منتظم في الصباح الباكر",
+      "notes": "تجنب تبليل الأوراق لتقليل الأمراض الفطرية.",
+      "diseases": ["tomato_late_blight", "nitrogen_deficiency", "whitefly"]
+    },
+    "potato": {
+      "name": "بطاطس",
+      "planting": "أكتوبر - نوفمبر",
+      "harvest": "فبراير - مارس",
+      "spraying": "كل 14 يوماً",
+      "irrigation": "ري بالتنقيط",
+      "notes": "تحتاج تربة جيدة الصرف.",
+      "diseases": ["potato_early_blight", "potato_late_blight"]
+    },
+    "cucumber": {
+      "name": "خيار",
+      "planting": "مارس - أبريل",
+      "harvest": "مايو - يونيو",
+      "spraying": "كل 7 أيام",
+      "irrigation": "ري يومي خفيف",
+      "notes": "يحتاج رطوبة عالية ولكن مع تهوية جيدة.",
+      "diseases": ["powdery_mildew", "whitefly"]
+    },
+    "wheat": {
+      "name": "قمح",
+      "planting": "نوفمبر",
+      "harvest": "مايو",
+      "spraying": "عند الحاجة",
+      "irrigation": "ري كل 15 يوم",
+      "notes": "يحتاج تربة طينية جيدة.",
+      "diseases": ["nitrogen_deficiency"]
+    }
+  },
+  "diseases": {
+    "tomato_late_blight": {
+      "name": "لفحة الطماطم المتأخرة",
+      "symptoms": "بقع بنية داكنة على الأوراق والثمار.",
+      "treatment": "إزالة الأوراق المصابة، استخدام مبيدات نحاسية.",
+      "irrigation": "الري بالتنقيط لتجنب رطوبة الأوراق.",
+      "pesticide": "مبيدات نحاسية أو أوكسيد كلوريد النحاس"
+    },
+    "potato_early_blight": {
+      "name": "لفحة البطاطس المبكرة",
+      "symptoms": "بقع بنية دائرية على الأوراق السفلية.",
+      "treatment": "رش مبيدات فطرية مثل كلوروثالونيل.",
+      "irrigation": "ري منتظم مع تجنب الإغراق.",
+      "pesticide": "كلوروثالونيل"
+    },
+    "potato_late_blight": {
+      "name": "لفحة البطاطس المتأخرة",
+      "symptoms": "بقع مائية رمادية على الأوراق.",
+      "treatment": "مبيدات فطرية وقائية.",
+      "irrigation": "تقليل الري في حالات الرطوبة العالية.",
+      "pesticide": "ميتالاكسيل"
+    },
+    "powdery_mildew": {
+      "name": "البياض الدقيقي",
+      "symptoms": "طبقة بيضاء دقيقية على الأوراق.",
+      "treatment": "رش الكبريت أو مبيدات فطرية.",
+      "irrigation": "الري في الصباح الباكر.",
+      "pesticide": "الكبريت"
+    },
+    "nitrogen_deficiency": {
+      "name": "نقص النيتروجين",
+      "symptoms": "اصفرار الأوراق السفلية.",
+      "treatment": "إضافة سماد يوريا.",
+      "irrigation": "الري المنتظم.",
+      "pesticide": "سماد يوريا"
+    },
+    "whitefly": {
+      "name": "الذبابة البيضاء",
+      "symptoms": "حشرات صغيرة بيضاء على ظهر الأوراق.",
+      "treatment": "مصائد صفراء لاصقة ومبيدات حشرية.",
+      "irrigation": "رش الأوراق بالماء بقوة.",
+      "pesticide": "إيميداكلوبريد"
+    },
+    "healthy": {
+      "name": "نبات سليم",
+      "symptoms": "لا توجد أعراض مرضية.",
+      "treatment": "استمر في العناية الجيدة.",
+      "irrigation": "الري حسب حاجة النبات.",
+      "pesticide": "لا يوجد"
+    }
+  }
+}
