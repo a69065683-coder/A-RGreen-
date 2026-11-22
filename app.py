@@ -11,7 +11,8 @@ import requests
 from PIL import Image
 import streamlit as st
 
-BASE_DIR = Path(__file__).resolve().parent
+
+MODEL_PATH = BASE_DIR / "model.tflite"
 KB_PATH = BASE_DIR / "agri_knowledge.json"
 MODEL_PATH = BASE_DIR / "model.h5"
 LABELS_PATH = BASE_DIR / "model_labels.json"
