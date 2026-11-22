@@ -11,10 +11,9 @@ import requests
 from PIL import Image
 import streamlit as st
 
-
-MODEL_PATH = BASE_DIR / "model.tflite"
+BASE_DIR = Path(__file__).resolve().parent
 KB_PATH = BASE_DIR / "agri_knowledge.json"
-MODEL_PATH = BASE_DIR / "model.h5"
+MODEL_PATH = BASE_DIR / "model.tflite"
 LABELS_PATH = BASE_DIR / "model_labels.json"
 IMAGE_SIZE = (224, 224)
 
@@ -57,7 +56,16 @@ def configured_weather_key() -> str:
 
 
 def disease_card(disease_id: str, confidence: float | None = None) -> None:
-    @st.cache_resource(show_spinner=False)
+    disease = KB.get("diseases", {}).get(disease_id, KB.get("diseases", {}).get("healthy", {}))
+    title = disease.get("name", "نتيجة غير معروفة")
+    st.markdown(f"<div class='card'><span class='badge'>التشخيص</span><h2>{title}</h2>", unsafe_allow_html=True)
+    if confidence is not None:
+        st.progress(float(max(0.0, min(confidence, 1.0))), text=f"ثقة النموذج: {confidence:.1%}")
+    st.markdown(f"**الأعراض:** {disease.get('symptoms', '—')}  \n**العلاج/الإجراء المقترح:** {disease.get('treatment', '—')}  \n**نصائح الري:** {disease.get('irrigation', '—')}</div>", unsafe_allow_html=True)
+    st.caption("تنبيه: التشخيص مساعد لاتخاذ القرار وليس بديلاً عن مهندس زراعي.")
+
+
+@st.cache_resource(show_spinner=False)
 def load_model_bundle():
     if not MODEL_PATH.exists():
         return None, None
@@ -67,26 +75,6 @@ def load_model_bundle():
         interpreter.allocate_tensors()
         labels = load_json(LABELS_PATH, [])
         return interpreter, labels
-    except Exception as exc:
-        return None, f"تعذر تحميل النموذج: {exc}"
-    title = disease.get("name", "نتيجة غير معروفة")
-    st.markdown(f"<div class='card'><span class='badge'>التشخيص</span><h2>{title}</h2>", unsafe_allow_html=True)
-    if confidence is not None:
-        st.progress(float(max(0.0, min(confidence, 1.0))), text=f"ثقة النموذج: {confidence:.1%}")
-    st.markdown(f"**الأعراض:** {disease.get('symptoms', '—')}  \n**العلاج/الإجراء المقترح:** {disease.get('treatment', '—')}  \n**نصائح الري:** {disease.get('irrigation', '—')}</div>", unsafe_allow_html=True)
-    st.caption("تنبيه: التشخيص مساعد لاتخاذ القرار وليس بديلاً عن مهندس زراعي. تحقّق من ملصق المبيد والقوانين المحلية وفترة الأمان قبل الاستخدام.")
-
-input_details = model.get_input_details()
-output_details = model.get_output_details()
-arr = np.asarray(image.resize(IMAGE_SIZE), dtype=np.float32) / 255.0
-arr = np.expand_dims(arr, axis=0)
-model.set_tensor(input_details[0]['index'], arr)
-model.invoke()
-probs = model.get_tensor(output_details[0]['index'])[0]
-idx = int(np.argmax(probs))
-        model = tf.keras.models.load_model(MODEL_PATH)
-        labels = load_json(LABELS_PATH, [])
-        return model, labels
     except Exception as exc:
         return None, f"تعذر تحميل النموذج: {exc}"
 
@@ -101,27 +89,39 @@ def page_home() -> None:
     c1, c2, c3 = st.columns(3)
     c1.metric("المحاصيل المدعومة", "4")
     c2.metric("أدوات ذكية", "5")
-    c3.metric("وضع التشخيص", "AI + تجريبي")
+    c3.metric("وضع التشخيص", "AI حقيقي")
     st.markdown("### ابدأ من القائمة الجانبية")
     st.info("ارفع صورة في طبيب النباتات، أو اختر محصولًا لعرض تقويمه، أو أدخل حالة الطقس للحصول على توصية فورية.")
-    st.markdown("<div class='card'><b>ملاحظة تشغيلية:</b> بعد تدريب النموذج ضع الملف <code>model.h5</code> وملف <code>model_labels.json</code> بجوار <code>app.py</code>. إذا لم يتوفرا، يعمل التطبيق بوضع Mock واضح للتجربة فقط.</div>", unsafe_allow_html=True)
 
 
 def page_doctor() -> None:
     st.title("🩺 طبيب النباتات")
-    st.write("ارفع صورة واضحة للورقة. سيستخدم التطبيق النموذج الحقيقي إن كان موجودًا، وإلا سيعرض نتيجة تجريبية ثابتة للصورة.")
+    st.write("ارفع صورة واضحة للورقة. سيستخدم التطبيق نموذج الذكاء الاصطناعي لتشخيص المرض.")
     uploaded = st.file_uploader("رفع صورة الورقة", type=["jpg", "jpeg", "png"])
     if not uploaded:
         return
     image = Image.open(uploaded).convert("RGB")
     st.image(image, caption="الصورة المرفوعة", width=420)
+    
     model, labels_or_error = load_model_bundle()
+    
     if model is not None and isinstance(labels_or_error, list):
-        arr = np.asarray(image.resize(IMAGE_SIZE), dtype=np.float32) / 255.0
-        probs = model.predict(np.expand_dims(arr, 0), verbose=0)[0]
-        idx = int(np.argmax(probs))
-        label = labels_or_error[idx] if idx < len(labels_or_error) else "healthy"
-        disease_card(label, float(probs[idx]))
+        try:
+            input_details = model.get_input_details()
+            output_details = model.get_output_details()
+            
+            arr = np.asarray(image.resize(IMAGE_SIZE), dtype=np.float32) / 255.0
+            arr = np.expand_dims(arr, axis=0)
+            
+            model.set_tensor(input_details[0]['index'], arr)
+            model.invoke()
+            probs = model.get_tensor(output_details[0]['index'])[0]
+            
+            idx = int(np.argmax(probs))
+            label = labels_or_error[idx] if idx < len(labels_or_error) else "healthy"
+            disease_card(label, float(probs[idx]))
+        except Exception as e:
+            st.error(f"حدث خطأ أثناء تحليل الصورة: {e}")
     else:
         label = mock_diagnosis(uploaded.getvalue())
         st.warning("النموذج المدرب غير موجود أو تعذر تحميله؛ هذه نتيجة تجريبية وليست تشخيصًا حقيقيًا.")
@@ -199,6 +199,6 @@ with st.sidebar:
     st.markdown("# 🌿 A-R-Green")
     page = st.radio("القائمة الرئيسية", ["الرئيسية", "طبيب النباتات", "التقويم الزراعي", "مساعد الري والرش", "أكاديمية التدريب"])
     st.divider()
-    st.caption("نسخة تجريبية قابلة للربط بنموذج CNN وOpenWeatherMap")
+    st.caption("نظام زراعي ذكي - نسخة 1.0")
 
 {"الرئيسية": page_home, "طبيب النباتات": page_doctor, "التقويم الزراعي": page_calendar, "مساعد الري والرش": page_weather, "أكاديمية التدريب": page_academy}[page]()
