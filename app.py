@@ -57,7 +57,18 @@ def configured_weather_key() -> str:
 
 
 def disease_card(disease_id: str, confidence: float | None = None) -> None:
-    disease = KB.get("diseases", {}).get(disease_id, KB.get("diseases", {}).get("healthy", {}))
+    @st.cache_resource(show_spinner=False)
+def load_model_bundle():
+    if not MODEL_PATH.exists():
+        return None, None
+    try:
+        import tflite_runtime.interpreter as tflite
+        interpreter = tflite.Interpreter(model_path=str(MODEL_PATH))
+        interpreter.allocate_tensors()
+        labels = load_json(LABELS_PATH, [])
+        return interpreter, labels
+    except Exception as exc:
+        return None, f"تعذر تحميل النموذج: {exc}"
     title = disease.get("name", "نتيجة غير معروفة")
     st.markdown(f"<div class='card'><span class='badge'>التشخيص</span><h2>{title}</h2>", unsafe_allow_html=True)
     if confidence is not None:
@@ -65,13 +76,14 @@ def disease_card(disease_id: str, confidence: float | None = None) -> None:
     st.markdown(f"**الأعراض:** {disease.get('symptoms', '—')}  \n**العلاج/الإجراء المقترح:** {disease.get('treatment', '—')}  \n**نصائح الري:** {disease.get('irrigation', '—')}</div>", unsafe_allow_html=True)
     st.caption("تنبيه: التشخيص مساعد لاتخاذ القرار وليس بديلاً عن مهندس زراعي. تحقّق من ملصق المبيد والقوانين المحلية وفترة الأمان قبل الاستخدام.")
 
-
-@st.cache_resource(show_spinner=False)
-def load_model_bundle():
-    if not MODEL_PATH.exists():
-        return None, None
-    try:
-        import tensorflow as tf
+input_details = model.get_input_details()
+output_details = model.get_output_details()
+arr = np.asarray(image.resize(IMAGE_SIZE), dtype=np.float32) / 255.0
+arr = np.expand_dims(arr, axis=0)
+model.set_tensor(input_details[0]['index'], arr)
+model.invoke()
+probs = model.get_tensor(output_details[0]['index'])[0]
+idx = int(np.argmax(probs))
         model = tf.keras.models.load_model(MODEL_PATH)
         labels = load_json(LABELS_PATH, [])
         return model, labels
